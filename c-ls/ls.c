@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <pwd.h>
 #include <grp.h>
+#include <time.h>
 
 // mode_t is a typedef in sys/stat, it's basically an unsigned int 
 // this part is to check the first bit which is the file type bit
@@ -18,8 +19,11 @@ void mode_string(mode_t mode, char *str){    //mode is just an Integer bitmask r
     else if (S_ISSOCK(mode))   str[0] = 's'; //if is it a socket set it to s 
     else                       str[0] = '-'; //if none then just dash
 
-// builidng the permisision string using bitwise & operator 
+    // printf("%u\n", mode);
+
+    // builidng the permisision string using bitwise & operator 
     str[1] = (mode & S_IRUSR) ? 'r' : '-';
+    // printf("%u\n", mode & S_IRUSR);
     str[2] = (mode & S_IWUSR) ? 'w' : '-';
     str[3] = (mode & S_IXUSR) ? 'x' : '-';
     str[4] = (mode & S_IRGRP) ? 'r' : '-';
@@ -45,11 +49,25 @@ void print_long(const char *dir, const char *name){
     mode_string(st.st_mode,modes);
 
     struct passwd *pw = getpwuid(st.st_uid);
-    struct group  *gr = getgrgid(st.st_uid);
+    struct group  *gr = getgrgid(st.st_gid);
     const char *user = pw ? pw->pw_name : "?";
     const char *group = gr ? gr->gr_name : "?";
-    printf("%s %s %s %s\n", modes, user, group, name );
 
+    char timebuf[64];
+
+    struct tm *tm = localtime(&st.st_mtim.tv_sec);
+    strftime(timebuf, sizeof(timebuf), "%b %e %H:%M", tm);
+
+    printf(
+            "%s %lu %s %s %ld %s %s\n",
+            modes,
+            (unsigned long)st.st_nlink,
+            user, 
+            group, 
+            (long)st.st_size,
+            timebuf,
+            name
+          );
 }
 
 // global bool var for differnt option flags
@@ -59,7 +77,7 @@ int long_format = 0;    // show long format (sys stat info)
 int main(int argc, char *argv[]) 
 {
     int opt;
-    while ((opt = getopt(argc, argv, "a")) != -1) {
+    while ((opt = getopt(argc, argv, "al")) != -1) {
         switch(opt){
             case 'a':
                 show_all = 1;
@@ -68,7 +86,7 @@ int main(int argc, char *argv[])
                 long_format = 1;
                 break;
             default:
-                fprintf(stderr, "usage: %s [-a] [path]\n", argv[0]);
+                fprintf(stderr, "usage: %s [-al] [path]\n", argv[0]);
                 return 1;
         }
     }
@@ -84,9 +102,13 @@ int main(int argc, char *argv[])
     struct dirent *entry;
     while((entry = readdir(dir)) != NULL){
         if(!show_all && entry ->d_name[0] == '.') continue; // to skip the dot files  
-        print_long(path, entry->d_name);
+        if(long_format){
+            print_long(path, entry->d_name);
+        }
+        else {
+            printf("%s\n", entry->d_name);  // d_name comes from the dereferencing the struct: (entry*).d_name
+        }
 
-        // printf("%s\n", entry->d_name);  // d_name comes from the dereferencing the struct: (entry*).d_name
     }   
     closedir(dir);
     return 0;
