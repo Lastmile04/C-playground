@@ -19,11 +19,10 @@ void mode_string(mode_t mode, char *str){    //mode is just an Integer bitmask r
     else if (S_ISSOCK(mode))   str[0] = 's'; //if is it a socket set it to s 
     else                       str[0] = '-'; //if none then just dash
 
-    // printf("%u\n", mode);
+    printf("%u\n", mode);
 
     // builidng the permisision string using bitwise & operator 
     str[1] = (mode & S_IRUSR) ? 'r' : '-';
-    // printf("%u\n", mode & S_IRUSR);
     str[2] = (mode & S_IWUSR) ? 'w' : '-';
     str[3] = (mode & S_IXUSR) ? 'x' : '-';
     str[4] = (mode & S_IRGRP) ? 'r' : '-';
@@ -33,6 +32,7 @@ void mode_string(mode_t mode, char *str){    //mode is just an Integer bitmask r
     str[8] = (mode & S_IWOTH) ? 'w' : '-';
     str[9] = (mode & S_IXOTH) ? 'x' : '-';
     str[10] = '\0';
+
 }
 
 void print_long(const char *dir, const char *name){
@@ -47,6 +47,20 @@ void print_long(const char *dir, const char *name){
 
     char modes[11];
     mode_string(st.st_mode,modes);
+
+    printf("mode      = %#o\n", st.st_mode);
+
+    printf("S_IRUSR   = %#o\n", S_IRUSR);
+    printf("S_IWUSR   = %#o\n", S_IWUSR);
+    printf("S_IXUSR   = %#o\n", S_IXUSR);
+
+    printf("S_IRGRP   = %#o\n", S_IRGRP);
+    printf("S_IWGRP   = %#o\n", S_IWGRP);
+    printf("S_IXGRP   = %#o\n", S_IXGRP);
+
+    printf("S_IROTH   = %#o\n", S_IROTH);
+    printf("S_IWOTH   = %#o\n", S_IWOTH);
+    printf("S_IXOTH   = %#o\n", S_IXOTH);
 
     struct passwd *pw = getpwuid(st.st_uid);
     struct group  *gr = getgrgid(st.st_gid);
