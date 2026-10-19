@@ -57,3 +57,5 @@ dkms.conf
 
 # compiled c binary
 lsbtw
+
+.clang-format
